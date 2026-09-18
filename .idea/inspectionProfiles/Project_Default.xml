@@ -1,0 +1,135 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO">
+      <scope name="Project Files" level="TYPO" enabled="true">
+        <option name="ignoredPackages">
+          <list>
+            <option value="pandas" />
+            <option value="openpyxl" />
+            <option value="xlrd" />
+            <option value="psycopg2-binary" />
+            <option value="llama-cpp-python" />
+            <option value="transformers" />
+            <option value="sentencepiece" />
+            <option value="python-dotenv" />
+            <option value="gunicorn" />
+            <option value="annotated-types" />
+            <option value="cachetools" />
+            <option value="certifi" />
+            <option value="charset-normalizer" />
+            <option value="colorama" />
+            <option value="contourpy" />
+            <option value="cycler" />
+            <option value="fonttools" />
+            <option value="google-ai-generativelanguage" />
+            <option value="google-api-core" />
+            <option value="google-api-python-client" />
+            <option value="google-auth" />
+            <option value="google-auth-httplib2" />
+            <option value="google-generativeai" />
+            <option value="googleapis-common-protos" />
+            <option value="grpcio" />
+            <option value="grpcio-status" />
+            <option value="httplib2" />
+            <option value="idna" />
+            <option value="kiwisolver" />
+            <option value="lxml" />
+            <option value="matplotlib" />
+            <option value="MetaTrader5" />
+            <option value="numpy" />
+            <option value="packaging" />
+            <option value="pandas-stubs" />
+            <option value="pillow" />
+            <option value="proto-plus" />
+            <option value="protobuf" />
+            <option value="pyasn1" />
+            <option value="pyasn1_modules" />
+            <option value="pydantic" />
+            <option value="pydantic_core" />
+            <option value="pyparsing" />
+            <option value="pyTelegramBotAPI" />
+            <option value="python-dateutil" />
+            <option value="python-pptx" />
+            <option value="pytz" />
+            <option value="requests" />
+            <option value="rsa" />
+            <option value="six" />
+            <option value="tqdm" />
+            <option value="typing-inspection" />
+            <option value="typing_extensions" />
+            <option value="tzdata" />
+            <option value="uritemplate" />
+            <option value="urllib3" />
+            <option value="xlsxwriter" />
+            <option value="asgiref" />
+            <option value="Django" />
+            <option value="django-clearcache" />
+            <option value="sqlparse" />
+          </list>
+        </option>
+      </scope>
+      <option name="ignoredPackages">
+        <list>
+          <option value="pandas" />
+          <option value="openpyxl" />
+          <option value="xlrd" />
+          <option value="psycopg2-binary" />
+          <option value="llama-cpp-python" />
+          <option value="transformers" />
+          <option value="sentencepiece" />
+          <option value="python-dotenv" />
+          <option value="gunicorn" />
+          <option value="annotated-types" />
+          <option value="cachetools" />
+          <option value="certifi" />
+          <option value="charset-normalizer" />
+          <option value="colorama" />
+          <option value="contourpy" />
+          <option value="cycler" />
+          <option value="fonttools" />
+          <option value="google-ai-generativelanguage" />
+          <option value="google-api-core" />
+          <option value="google-api-python-client" />
+          <option value="google-auth" />
+          <option value="google-auth-httplib2" />
+          <option value="google-generativeai" />
+          <option value="googleapis-common-protos" />
+          <option value="grpcio" />
+          <option value="grpcio-status" />
+          <option value="httplib2" />
+          <option value="idna" />
+          <option value="kiwisolver" />
+          <option value="lxml" />
+          <option value="matplotlib" />
+          <option value="MetaTrader5" />
+          <option value="numpy" />
+          <option value="packaging" />
+          <option value="pandas-stubs" />
+          <option value="pillow" />
+          <option value="proto-plus" />
+          <option value="protobuf" />
+          <option value="pyasn1" />
+          <option value="pyasn1_modules" />
+          <option value="pydantic" />
+          <option value="pydantic_core" />
+          <option value="pyparsing" />
+          <option value="pyTelegramBotAPI" />
+          <option value="python-dateutil" />
+          <option value="python-pptx" />
+          <option value="pytz" />
+          <option value="requests" />
+          <option value="rsa" />
+          <option value="six" />
+          <option value="tqdm" />
+          <option value="typing-inspection" />
+          <option value="typing_extensions" />
+          <option value="tzdata" />
+          <option value="uritemplate" />
+          <option value="urllib3" />
+          <option value="xlsxwriter" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
