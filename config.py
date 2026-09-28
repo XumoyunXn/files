@@ -17,11 +17,21 @@ API_TIMEOUT = int(os.getenv("API_TIMEOUT", "20"))
 PHONE_NUMBERS = [
     os.getenv("PHONE_NUMBER_1"),
     os.getenv("PHONE_NUMBER_2"),
+    os.getenv("PHONE_NUMBER_3"),
 ]
 
 ADMIN_USERNAMES = [
     os.getenv("ADMIN_USERNAME_1"),
     os.getenv("ADMIN_USERNAME_2"),
+]
+
+# Admin foydalanuvchilar (statistika ko'rish, telefon qo'shish huquqiga ega)
+# .env fayliga ADMIN_IDS=34687360,123456 tarzida qo'shsangiz, shu yerda
+# avtomatik o'qiladi. Hech narsa qo'shilmasa, standart qiymat ishlatiladi.
+ADMIN_IDS = [
+    int(admin_id.strip())
+    for admin_id in os.getenv("ADMIN_IDS", "34687360").split(",")
+    if admin_id.strip()
 ]
 
 REGIONS = [

@@ -19,6 +19,7 @@ from config import (
     BOT_TOKEN,
     GROUP_CHAT_ID,
     REGIONS,
+    ADMIN_IDS,
 )
 
 from api_client import (
@@ -32,6 +33,8 @@ from api_client import (
 from ai_helper import (
     match_product,
 )
+
+import storage
 
 
 # =========================================================
@@ -60,6 +63,15 @@ logger = logging.getLogger(__name__)
     COMP_PERSON,
     COMP_PHONE,
 ) = range(8)
+
+
+(
+    ADMIN_MENU,
+    ADMIN_ADD_PHONE,
+    ADMIN_REMOVE_PHONE,
+    ADMIN_ADD_USERNAME,
+    ADMIN_REMOVE_USERNAME,
+) = range(5)
 
 
 # =========================================================
@@ -98,6 +110,33 @@ CANCEL_KEYBOARD = ReplyKeyboardMarkup(
 )
 
 
+ADMIN_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ["📊 Statistika"],
+        ["➕ Telefon qo‘shish", "➖ Telefon o‘chirish"],
+        ["➕ Username qo‘shish", "➖ Username o‘chirish"],
+        ["🔚 Admin panelidan chiqish"],
+    ],
+    resize_keyboard=True,
+)
+
+
+ADMIN_CANCEL_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ["❌ Bekor qilish"],
+    ],
+    resize_keyboard=True,
+)
+
+
+# =========================================================
+# ADMIN HELPERS
+# =========================================================
+
+def is_admin(user_id: int) -> bool:
+    return user_id in ADMIN_IDS
+
+
 # =========================================================
 # START
 # =========================================================
@@ -111,6 +150,10 @@ async def start(
     """
 
     context.user_data.clear()
+
+    storage.add_user(
+        update.effective_user.id
+    )
 
     await update.message.reply_text(
         "👋 <b>Assalomu alaykum!</b>\n\n"
@@ -179,16 +222,17 @@ async def quick_contact(
     Quick contact information.
     """
 
-    from config import PHONE_NUMBERS, ADMIN_USERNAMES
+    phone_list = storage.get_phone_numbers()
+    username_list = storage.get_admin_usernames()
 
     phones = "\n".join(
         f"📞 {phone}"
-        for phone in PHONE_NUMBERS
+        for phone in phone_list
     )
 
     admins = "\n".join(
         f"👤 {username}"
-        for username in ADMIN_USERNAMES
+        for username in username_list
     )
 
     text = (
@@ -1085,6 +1129,371 @@ async def products_command(
 
 
 # =========================================================
+# ADMIN: ENTRY (/admin)
+# =========================================================
+
+async def admin_start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    /admin — faqat ADMIN_IDS ro'yxatidagi userlar uchun.
+    """
+
+    user_id = update.effective_user.id
+
+    if not is_admin(user_id):
+
+        await update.message.reply_text(
+            "⛔ Sizda bu buyruqdan foydalanish huquqi yo‘q."
+        )
+
+        return ConversationHandler.END
+
+    await update.message.reply_text(
+        "🛠 <b>Admin panel</b>\n\n"
+        "Kerakli bo‘limni tanlang:",
+        parse_mode=ParseMode.HTML,
+        reply_markup=ADMIN_KEYBOARD,
+    )
+
+    return ADMIN_MENU
+
+
+# =========================================================
+# ADMIN: MENU
+# =========================================================
+
+async def admin_menu(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    Admin panel asosiy menyusi.
+    """
+
+    text = update.message.text.strip()
+
+    if text == "📊 Statistika":
+
+        user_count = storage.get_user_count()
+
+        await update.message.reply_text(
+            "📊 <b>Statistika</b>\n\n"
+            f"👥 Botga /start bosgan userlar soni: "
+            f"<b>{user_count}</b>",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+        return ADMIN_MENU
+
+    if text == "➕ Telefon qo‘shish":
+
+        await update.message.reply_text(
+            "📱 Qo‘shmoqchi bo‘lgan telefon raqamni kiriting:\n\n"
+            "Masalan:\n"
+            "+998901234567",
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_ADD_PHONE
+
+    if text == "➖ Telefon o‘chirish":
+
+        phone_list = storage.get_phone_numbers()
+
+        if not phone_list:
+
+            await update.message.reply_text(
+                "📭 Hozircha telefon raqamlar mavjud emas.",
+                reply_markup=ADMIN_KEYBOARD,
+            )
+
+            return ADMIN_MENU
+
+        phones_text = "\n".join(
+            f"{index}. {phone}"
+            for index, phone in enumerate(
+                phone_list,
+                start=1,
+            )
+        )
+
+        await update.message.reply_text(
+            "➖ <b>O‘chirmoqchi bo‘lgan raqamni yozing:</b>\n\n"
+            f"{phones_text}",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_REMOVE_PHONE
+
+    if text == "➕ Username qo‘shish":
+
+        await update.message.reply_text(
+            "👤 Qo‘shmoqchi bo‘lgan Telegram usernameni kiriting:\n\n"
+            "Masalan:\n"
+            "@username",
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_ADD_USERNAME
+
+    if text == "➖ Username o‘chirish":
+
+        username_list = storage.get_admin_usernames()
+
+        if not username_list:
+
+            await update.message.reply_text(
+                "📭 Hozircha usernamelar mavjud emas.",
+                reply_markup=ADMIN_KEYBOARD,
+            )
+
+            return ADMIN_MENU
+
+        usernames_text = "\n".join(
+            f"{index}. {username}"
+            for index, username in enumerate(
+                username_list,
+                start=1,
+            )
+        )
+
+        await update.message.reply_text(
+            "➖ <b>O‘chirmoqchi bo‘lgan usernameni yozing:</b>\n\n"
+            f"{usernames_text}",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_REMOVE_USERNAME
+
+    if text == "🔚 Admin panelidan chiqish":
+
+        await update.message.reply_text(
+            "🔚 Admin paneldan chiqdingiz.",
+            reply_markup=MAIN_KEYBOARD,
+        )
+
+        return ConversationHandler.END
+
+    await update.message.reply_text(
+        "⚠️ Iltimos, menyudan kerakli bo‘limni tanlang.",
+        reply_markup=ADMIN_KEYBOARD,
+    )
+
+    return ADMIN_MENU
+
+
+# =========================================================
+# ADMIN: ADD PHONE
+# =========================================================
+
+async def admin_add_phone(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    Yangi telefon raqamni saqlaydi.
+    """
+
+    text = update.message.text.strip()
+
+    if text == "❌ Bekor qilish":
+
+        await update.message.reply_text(
+            "❌ Bekor qilindi.",
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+        return ADMIN_MENU
+
+    if len(text) < 7:
+
+        await update.message.reply_text(
+            "⚠️ Telefon raqamini to‘g‘ri kiriting.\n\n"
+            "Masalan:\n"
+            "+998901234567",
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_ADD_PHONE
+
+    added = storage.add_phone_number(text)
+
+    if added:
+
+        await update.message.reply_text(
+            f"✅ <b>{text}</b> raqami qo‘shildi.",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+    else:
+
+        await update.message.reply_text(
+            "⚠️ Bu raqam allaqachon ro‘yxatda mavjud.",
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+    return ADMIN_MENU
+
+
+# =========================================================
+# ADMIN: REMOVE PHONE
+# =========================================================
+
+async def admin_remove_phone(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    Mavjud telefon raqamni o'chiradi.
+    """
+
+    text = update.message.text.strip()
+
+    if text == "❌ Bekor qilish":
+
+        await update.message.reply_text(
+            "❌ Bekor qilindi.",
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+        return ADMIN_MENU
+
+    removed = storage.remove_phone_number(text)
+
+    if removed:
+
+        await update.message.reply_text(
+            f"✅ <b>{text}</b> raqami o‘chirildi.",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+    else:
+
+        await update.message.reply_text(
+            "⚠️ Bunday raqam ro‘yxatda topilmadi.\n\n"
+            "Raqamni ro‘yxatdagidek aniq yozing.",
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_REMOVE_PHONE
+
+    return ADMIN_MENU
+
+
+# =========================================================
+# ADMIN: ADD USERNAME
+# =========================================================
+
+async def admin_add_username(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    Yangi admin usernameni saqlaydi.
+    """
+
+    text = update.message.text.strip()
+
+    if text == "❌ Bekor qilish":
+
+        await update.message.reply_text(
+            "❌ Bekor qilindi.",
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+        return ADMIN_MENU
+
+    if len(text) < 3:
+
+        await update.message.reply_text(
+            "⚠️ Usernameni to‘g‘ri kiriting.\n\n"
+            "Masalan:\n"
+            "@username",
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_ADD_USERNAME
+
+    if not text.startswith("@"):
+        text = f"@{text}"
+
+    added = storage.add_admin_username(text)
+
+    if added:
+
+        await update.message.reply_text(
+            f"✅ <b>{text}</b> username qo‘shildi.",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+    else:
+
+        await update.message.reply_text(
+            "⚠️ Bu username allaqachon ro‘yxatda mavjud.",
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+    return ADMIN_MENU
+
+
+# =========================================================
+# ADMIN: REMOVE USERNAME
+# =========================================================
+
+async def admin_remove_username(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """
+    Mavjud admin usernameni o'chiradi.
+    """
+
+    text = update.message.text.strip()
+
+    if text == "❌ Bekor qilish":
+
+        await update.message.reply_text(
+            "❌ Bekor qilindi.",
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+        return ADMIN_MENU
+
+    if not text.startswith("@"):
+        text = f"@{text}"
+
+    removed = storage.remove_admin_username(text)
+
+    if removed:
+
+        await update.message.reply_text(
+            f"✅ <b>{text}</b> username o‘chirildi.",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ADMIN_KEYBOARD,
+        )
+
+    else:
+
+        await update.message.reply_text(
+            "⚠️ Bunday username ro‘yxatda topilmadi.\n\n"
+            "Usernameni ro‘yxatdagidek aniq yozing.",
+            reply_markup=ADMIN_CANCEL_KEYBOARD,
+        )
+
+        return ADMIN_REMOVE_USERNAME
+
+    return ADMIN_MENU
+
+
+# =========================================================
 # ERROR HANDLER
 # =========================================================
 
@@ -1143,6 +1552,11 @@ async def post_init(
     logger.info(
         "GROUP_CHAT_ID: %s",
         GROUP_CHAT_ID,
+    )
+
+    logger.info(
+        "ADMIN_IDS: %s",
+        ADMIN_IDS,
     )
 
     logger.info(
@@ -1221,7 +1635,77 @@ def main():
     )
 
     # =====================================================
-    # CONVERSATION
+    # ADMIN CONVERSATION
+    # =====================================================
+    # MUHIM: bu handler asosiy (mijozlar) conversationdan OLDIN
+    # ro'yxatdan o'tkaziladi. Aks holda, agar admin avval /start
+    # bosgan bo'lsa (asosiy conversationda "ochiq holat" qolib
+    # ketadi), uning admin-panel tugmalari asosiy conversation
+    # tomonidan "tutib qolinib", "Iltimos, menyudan tanlang"
+    # xabari chiqaveradi.
+
+    admin_conversation_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler(
+                "admin",
+                admin_start,
+            ),
+        ],
+
+        states={
+
+            ADMIN_MENU: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    admin_menu,
+                ),
+            ],
+
+            ADMIN_ADD_PHONE: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    admin_add_phone,
+                ),
+            ],
+
+            ADMIN_REMOVE_PHONE: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    admin_remove_phone,
+                ),
+            ],
+
+            ADMIN_ADD_USERNAME: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    admin_add_username,
+                ),
+            ],
+
+            ADMIN_REMOVE_USERNAME: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    admin_remove_username,
+                ),
+            ],
+        },
+
+        fallbacks=[
+            CommandHandler(
+                "admin",
+                admin_start,
+            ),
+        ],
+
+        allow_reentry=True,
+    )
+
+    application.add_handler(
+        admin_conversation_handler
+    )
+
+    # =====================================================
+    # MAIN CONVERSATION
     # =====================================================
 
     conversation_handler = ConversationHandler(
