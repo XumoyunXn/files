@@ -30,7 +30,7 @@ ADMIN_USERNAMES = [
 # avtomatik o'qiladi. Hech narsa qo'shilmasa, standart qiymat ishlatiladi.
 ADMIN_IDS = [
     int(admin_id.strip())
-    for admin_id in os.getenv("ADMIN_IDS", "34687360").split(",")
+    for admin_id in os.getenv("ADMIN_IDS",  "34687360, 7589484102").split(",")
     if admin_id.strip()
 ]
 
