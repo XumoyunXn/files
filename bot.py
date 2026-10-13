@@ -4,6 +4,7 @@ from telegram import (
     Update,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
+    KeyboardButton,
 )
 from telegram.constants import ParseMode
 from telegram.ext import (
@@ -110,6 +111,16 @@ CANCEL_KEYBOARD = ReplyKeyboardMarkup(
 )
 
 
+# Telefon raqamini avtomatik yuboruvchi tugma
+PHONE_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        [KeyboardButton("📲 Raqamni yuborish", request_contact=True)],
+        ["❌ Bekor qilish"],
+    ],
+    resize_keyboard=True,
+)
+
+
 ADMIN_KEYBOARD = ReplyKeyboardMarkup(
     [
         ["📊 Statistika"],
@@ -130,11 +141,39 @@ ADMIN_CANCEL_KEYBOARD = ReplyKeyboardMarkup(
 
 
 # =========================================================
-# ADMIN HELPERS
+# HELPERS
 # =========================================================
 
 def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
+
+
+def extract_phone(update: Update) -> str:
+    """
+    Kontakt tugmasi yoki qo'lda yozilgan matndan telefonni oladi.
+    Boshqa odamning kontakti yuborilsa, bo'sh qiymat qaytaradi.
+    """
+
+    msg = update.message
+
+    if msg.contact:
+
+        contact = msg.contact
+
+        if (
+            contact.user_id
+            and contact.user_id != update.effective_user.id
+        ):
+            return ""
+
+        phone = contact.phone_number.strip()
+
+        if not phone.startswith("+"):
+            phone = "+" + phone
+
+        return phone
+
+    return (msg.text or "").strip()
 
 
 # =========================================================
@@ -271,8 +310,9 @@ async def type_choice(
         context.user_data.clear()
 
         await update.message.reply_text(
-            "📱 Telefon raqamingizni kiriting:",
-            reply_markup=CANCEL_KEYBOARD,
+            "📱 Telefon raqamingizni kiriting yoki "
+            "pastdagi tugmani bosing:",
+            reply_markup=PHONE_KEYBOARD,
         )
 
         return IND_PHONE
@@ -319,20 +359,22 @@ async def individual_phone(
     context: ContextTypes.DEFAULT_TYPE,
 ):
     """
-    Individual customer phone.
+    Individual customer phone (kontakt tugmasi yoki qo'lda).
     """
 
-    text = update.message.text.strip()
+    text = extract_phone(update)
 
     if text == "❌ Bekor qilish":
         return await cancel(update, context)
 
     if len(text) < 7:
+
         await update.message.reply_text(
-            "⚠️ Telefon raqamini to‘g‘ri kiriting.\n\n"
+            "⚠️ Telefon raqamini to‘g‘ri kiriting yoki "
+            "pastdagi tugmani bosing.\n\n"
             "Masalan:\n"
             "+998901234567",
-            reply_markup=CANCEL_KEYBOARD,
+            reply_markup=PHONE_KEYBOARD,
         )
 
         return IND_PHONE
@@ -367,6 +409,7 @@ async def individual_product(
         return await cancel(update, context)
 
     if not text:
+
         await update.message.reply_text(
             "⚠️ Mahsulot nomini kiriting.",
             reply_markup=CANCEL_KEYBOARD,
@@ -375,6 +418,7 @@ async def individual_product(
         return IND_PRODUCT
 
     try:
+
         logger.info(
             "🔎 Product search: %s",
             text,
@@ -678,37 +722,13 @@ async def individual_region(
     # LOG
     # =====================================================
 
-    logger.info(
-        "========================================"
-    )
-
-    logger.info(
-        "📤 SENDING INDIVIDUAL LEAD"
-    )
-
-    logger.info(
-        "Phone: %s",
-        lead_data["phone"],
-    )
-
-    logger.info(
-        "Product: %s",
-        lead_data["product"],
-    )
-
-    logger.info(
-        "Quantity: %s",
-        lead_data["quantity"],
-    )
-
-    logger.info(
-        "Region: %s",
-        lead_data["region"],
-    )
-
-    logger.info(
-        "========================================"
-    )
+    logger.info("========================================")
+    logger.info("📤 SENDING INDIVIDUAL LEAD")
+    logger.info("Phone: %s", lead_data["phone"])
+    logger.info("Product: %s", lead_data["product"])
+    logger.info("Quantity: %s", lead_data["quantity"])
+    logger.info("Region: %s", lead_data["region"])
+    logger.info("========================================")
 
     # =====================================================
     # 1. API GA YUBORISH
@@ -850,8 +870,9 @@ async def company_person(
     context.user_data["contact_person"] = text
 
     await update.message.reply_text(
-        "📱 Telefon raqamini kiriting:",
-        reply_markup=CANCEL_KEYBOARD,
+        "📱 Telefon raqamini kiriting yoki "
+        "pastdagi tugmani bosing:",
+        reply_markup=PHONE_KEYBOARD,
     )
 
     return COMP_PHONE
@@ -913,10 +934,10 @@ async def company_phone(
     context: ContextTypes.DEFAULT_TYPE,
 ):
     """
-    Company phone and final submission.
+    Company phone and final submission (kontakt tugmasi yoki qo'lda).
     """
 
-    text = update.message.text.strip()
+    text = extract_phone(update)
 
     if text == "❌ Bekor qilish":
         return await cancel(update, context)
@@ -924,8 +945,9 @@ async def company_phone(
     if len(text) < 7:
 
         await update.message.reply_text(
-            "⚠️ Telefon raqamini to‘g‘ri kiriting.",
-            reply_markup=CANCEL_KEYBOARD,
+            "⚠️ Telefon raqamini to‘g‘ri kiriting yoki "
+            "pastdagi tugmani bosing.",
+            reply_markup=PHONE_KEYBOARD,
         )
 
         return COMP_PHONE
@@ -952,32 +974,12 @@ async def company_phone(
     # LOG
     # =====================================================
 
-    logger.info(
-        "========================================"
-    )
-
-    logger.info(
-        "📤 SENDING COMPANY LEAD"
-    )
-
-    logger.info(
-        "Company: %s",
-        lead_data["company_name"],
-    )
-
-    logger.info(
-        "Person: %s",
-        lead_data["contact_person"],
-    )
-
-    logger.info(
-        "Phone: %s",
-        lead_data["phone"],
-    )
-
-    logger.info(
-        "========================================"
-    )
+    logger.info("========================================")
+    logger.info("📤 SENDING COMPANY LEAD")
+    logger.info("Company: %s", lead_data["company_name"])
+    logger.info("Person: %s", lead_data["contact_person"])
+    logger.info("Phone: %s", lead_data["phone"])
+    logger.info("========================================")
 
     # =====================================================
     # 1. API
@@ -1541,27 +1543,11 @@ async def post_init(
     Bot startup.
     """
 
-    logger.info(
-        "========================================"
-    )
-
-    logger.info(
-        "🚀 BOT IS STARTING..."
-    )
-
-    logger.info(
-        "GROUP_CHAT_ID: %s",
-        GROUP_CHAT_ID,
-    )
-
-    logger.info(
-        "ADMIN_IDS: %s",
-        ADMIN_IDS,
-    )
-
-    logger.info(
-        "========================================"
-    )
+    logger.info("========================================")
+    logger.info("🚀 BOT IS STARTING...")
+    logger.info("GROUP_CHAT_ID: %s", GROUP_CHAT_ID)
+    logger.info("ADMIN_IDS: %s", ADMIN_IDS)
+    logger.info("========================================")
 
     # Load products at startup
     try:
@@ -1603,9 +1589,7 @@ async def post_shutdown(
             e,
         )
 
-    logger.info(
-        "🛑 Bot stopped."
-    )
+    logger.info("🛑 Bot stopped.")
 
 
 # =========================================================
@@ -1639,10 +1623,8 @@ def main():
     # =====================================================
     # MUHIM: bu handler asosiy (mijozlar) conversationdan OLDIN
     # ro'yxatdan o'tkaziladi. Aks holda, agar admin avval /start
-    # bosgan bo'lsa (asosiy conversationda "ochiq holat" qolib
-    # ketadi), uning admin-panel tugmalari asosiy conversation
-    # tomonidan "tutib qolinib", "Iltimos, menyudan tanlang"
-    # xabari chiqaveradi.
+    # bosgan bo'lsa, uning admin-panel tugmalari asosiy
+    # conversation tomonidan "tutib qolinadi".
 
     admin_conversation_handler = ConversationHandler(
         entry_points=[
@@ -1725,9 +1707,10 @@ def main():
                 ),
             ],
 
+            # Matn YOKI kontakt tugmasi qabul qilinadi
             IND_PHONE: [
                 MessageHandler(
-                    filters.TEXT & ~filters.COMMAND,
+                    (filters.TEXT & ~filters.COMMAND) | filters.CONTACT,
                     individual_phone,
                 ),
             ],
@@ -1767,9 +1750,10 @@ def main():
                 ),
             ],
 
+            # Matn YOKI kontakt tugmasi qabul qilinadi
             COMP_PHONE: [
                 MessageHandler(
-                    filters.TEXT & ~filters.COMMAND,
+                    (filters.TEXT & ~filters.COMMAND) | filters.CONTACT,
                     company_phone,
                 ),
             ],
@@ -1814,9 +1798,7 @@ def main():
         error_handler
     )
 
-    logger.info(
-        "🤖 Bot polling started..."
-    )
+    logger.info("🤖 Bot polling started...")
 
     application.run_polling(
         drop_pending_updates=True

@@ -62,10 +62,6 @@
             <option value="uritemplate" />
             <option value="urllib3" />
             <option value="xlsxwriter" />
-            <option value="asgiref" />
-            <option value="Django" />
-            <option value="django-clearcache" />
-            <option value="sqlparse" />
           </list>
         </option>
       </scope>

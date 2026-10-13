@@ -1,56 +1,92 @@
-# Telegram bot — mahsulot so'rovi
+# 🎬 Image → Video Telegram Bot
+
+Rasm yuborasiz → Prompt yozasiz → Video olasiz!
 
 ## O'rnatish
+
+### 1. Kerakli narsalar
+
+- Python 3.10+
+- Telegram Bot Token (@BotFather dan)
+- Runway ML API Key (https://app.runwayml.com/account/api-keys)
+- VPS yoki lokal server
+
+### 2. Paketlarni o'rnatish
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Sozlash (`config.py`)
+### 3. Token va API Key sozlash
 
-1. **BOT_TOKEN** — @BotFather orqali olingan token
-2. **ANTHROPIC_API_KEY** — Anthropic Console'dan olingan API kalit
-3. **GOOGLE_CREDENTIALS_FILE** va **SPREADSHEET_ID** — quyida tushuntirilgan
-4. **PHONE_NUMBERS**, **ADMIN_USERNAMES** — tezkor bog'lanish uchun 2 tadan
-5. **REGIONS** — kerak bo'lsa ro'yxatni o'zgartirishingiz mumkin
+**Linux/Mac:**
+```bash
+export TELEGRAM_BOT_TOKEN="7123456789:AAFxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export RUNWAY_API_KEY="rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
 
-## PostgreSQL ulash
+**Windows:**
+```cmd
+set TELEGRAM_BOT_TOKEN=7123456789:AAFxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+set RUNWAY_API_KEY=rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
 
-1. PostgreSQL bazasida jadval yarating:
-   ```sql
-   CREATE TABLE products (
-       id SERIAL PRIMARY KEY,
-       name TEXT NOT NULL,
-       info TEXT
-   );
-   ```
-2. `config.py` dagi `DATABASE_URL` ni o'zingizning bazangizga moslang:
-   `postgresql://USER:PASSWORD@HOST:5432/DBNAME`
-3. Agar jadval yoki ustun nomlaringiz boshqacha bo'lsa, `config.py` dagi
-   `PRODUCTS_TABLE`, `COLUMN_NAME`, `COLUMN_INFO` qiymatlarini o'zgartiring
-4. Bot ishga tushganda ulanish pool avtomatik ochiladi (`db.py` → `create_pool`)
+Yoki `bot.py` faylida to'g'ridan-to'g'ri o'zgartiring:
+```python
+TELEGRAM_TOKEN = "YOUR_BOT_TOKEN_HERE"
+RUNWAY_API_KEY = "YOUR_RUNWAY_KEY_HERE"
+```
 
-## Ishga tushirish
+### 4. Botni ishga tushirish
 
 ```bash
 python bot.py
 ```
 
-## Oqim tuzilishi
+---
 
-- **/start** → 3 ta tugma: Jismoniy shaxs / Kompaniya / Tezkor bog'lanish
-- **Tezkor bog'lanish** → 2 ta telefon raqam + 2 ta admin username ko'rsatiladi
-- **Jismoniy shaxs**:
-  telefon → mahsulot nomi (AI orqali Sheetdan qidiriladi, topilmasa
-  o'xshashlari taklif qilinadi) → ishlatish maqsadi (AI maslahat beradi) →
-  yetkazib berish hududi (12 viloyat) → yakun
-- **Kompaniya**: kompaniya nomi → mas'ul shaxs → telefon → yakun
-  *(bu qism aniq belgilanmagani uchun sodda variant sifatida qo'shildi —
-  kerak bo'lsa kengaytirish oson)*
+## Ishlatish
 
-## Eslatma
+1. Telegram da botni toping
+2. `/start` bosing
+3. Rasm yuboring
+4. Prompt yozing (inglizcha yaxshi ishlaydi):
+   - `"A woman walking slowly in the rain, cinematic"`
+   - `"Camera slowly zooms out, dramatic lighting"`
+   - `"Leaves falling from trees, slow motion"`
+5. 30-90 soniya kuting → Video keladi!
 
-- `bot.py` ichida `context.user_data` ga yozilgan ma'lumotlarni (telefon,
-  mahsulot, maqsad, hudud) CRM/bazaga yoki adminga xabar sifatida
-  yuborishni xohlasangiz, `ind_region` va `comp_phone` funksiyalari oxiriga
-  qo'shimcha kod qo'shsangiz bo'ladi (masalan admin guruhga xabar yuborish).
+---
+
+## Runway ML Narxlari
+
+- 5 soniyalik video: ~$0.05
+- 10 soniyalik video: ~$0.10
+- Bepul trial: ro'yxatdan o'tganda 125 ta kredit
+
+---
+
+## VPS ga joylashtirish (ixtiyoriy)
+
+```bash
+# systemd service yaratish
+sudo nano /etc/systemd/system/videobot.service
+
+[Unit]
+Description=Image to Video Telegram Bot
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/image-to-video-bot
+Environment=TELEGRAM_BOT_TOKEN=your_token
+Environment=RUNWAY_API_KEY=your_key
+ExecStart=/usr/bin/python3 bot.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl enable videobot
+sudo systemctl start videobot
+```
